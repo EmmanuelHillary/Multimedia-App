@@ -1,0 +1,313 @@
+{% extends 'video_app/base.html' %}
+{% load static %}
+{% block messages %}
+{% if messages %}
+  <div class="ui info message">
+    <i class="close icon"></i>
+    <div class="header">
+      Media Info
+    </div>
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock messages %}
+{% block video_block %}
+
+<div class="ui modal create-video">
+  <i class="close icon"></i>
+  <div class="header">
+    Create Media
+  </div>
+  <div class="image content">
+    <div class="description">
+      <div class="ui floating negative message" id="create-message" style="display: none;">
+        <i class="close icon"></i>
+        <div class="header" id="create-header">
+          ERROR
+        </div>
+        <ul id="create_message_content"></ul>
+      </div>
+      <form class="ui form" id="create" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="field">
+          <label>Title</label>
+          <input type="text" name="title" placeholder="Title">
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea name="description"></textarea>
+        </div>
+        <label class="ui button" for="file-upload" style="pointer: cursor; margin-bottom: 10px;" ><i class="upload icon"></i>File Upload</label>
+        <input type="file" id="file-upload" style="display: none;" name="file" accept="image/*,video/*">
+        <input type="file" id="thumbnail-upload" style="display: none;" name="thumbnail" accept="image/*,video/*">
+        <span id="file-type"></span>
+    </div>
+  </div>
+  <div class="actions">
+    <div class="ui black deny button">
+      cancel
+    </div>
+    <button type="submit" class="ui positive right labeled icon button">
+      Create
+      <i class="plus icon"></i>
+    </button>
+  </div>
+  </form>
+</div>
+<div class="ui modal login">
+  <i class="close icon"></i>
+  <div class="header">
+    Login
+  </div>
+  <div class="image content">
+    <div class="description">
+      <div class="ui floating negative message" id="login-message" style="display: none;">
+        <i class="close icon"></i>
+        <div class="header" id="login-header">
+          ERROR
+        </div>
+        <ul id="login_message_content"></ul>
+      </div>
+      <form class="ui form" id="login" method="post">
+        {% csrf_token %}
+        <div class="field">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="Username">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Password">
+        </div>
+        <button class="ui positive button" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="ui modal signup">
+  <i class="close icon"></i>
+  <div class="header">
+    Sign Up
+  </div>
+  <div class="image content">
+    <div class="description">
+      <div class="ui floating negative message" id="message" style="display: none;">
+        <i class="close icon"></i>
+        <div class="header" id="header">
+          ERROR
+        </div>
+        <ul id="message_content"></ul>
+      </div>
+      <form class="ui form" id="signup" action="{% url 'signup' %}" method="post">
+        {% csrf_token %}
+        {% for field in signup_form %}
+        <div class="field">
+          <label>{{ field.label_tag }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <small style="color: grey">{{ field.help_text }}</small>
+          {% endif %}
+          {% if field.errors %}
+            {% for error in field.errors %}
+            <div class="ui error message">
+              <p>{{ error }}</p>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        {% endfor %}
+        <button class="ui positive button" type="submit">Sign Up</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% if objs %}
+{% for obj in objs %}
+<div class="vid-list">
+  <a href="{% url 'detail' obj.id %}"><img src="{{obj.thumbnail.url}}" class="thumbnail" alt=""></a>
+     <div class="flex-div">
+         <div class="vid-info">
+             <a href="{% url 'detail' obj.id %}" class="">{{obj.title}}</a>
+                 <p>{{obj.user.username}}</p>
+                 <p>{{obj.views}} views &bull; {{obj.created|timesince}}</p>
+         </div>
+     </div>
+ </div>
+ {% endfor %}
+ {% else %}
+ <h1>None</h1>
+{% endif %}
+{% endblock video_block %}
+
+{% block js %}
+$('.message .close')
+  .on('click', function() {
+    $(this)
+      .closest('.message')
+      .transition('fade')
+    ;
+  })
+;
+$("#signup").submit(function (e) {
+  // preventing from page reload and default actions
+  e.preventDefault();
+  // serialize the data for sending the form data.
+  var serializedData = $(this).serialize();
+  // make POST ajax call
+  $.ajax({
+      type: 'POST',
+      url: "{% url 'signup' %}",
+      data: serializedData,
+      success: function (response) {
+          // on successfull creating object
+          document.getElementById("header").innerHTML = "Your user registration was successful."
+          document.getElementById("message").classList.remove("negative")
+          document.getElementById("message").classList.add("success")
+          document.getElementById("message_content").innerHTML = "<li>You may now log-in with the username you have chosen</li>"
+          document.getElementById("message").style.display="block"
+          // 1. clear the form.
+          $("#signup").trigger('reset');
+          // 2. focus to nickname input 
+          $("#id_username").focus();
+
+      },
+      error: function (response) {
+        console.log(response)
+        document.getElementById("header").innerHTML = "Error"
+        document.getElementById("message").classList.remove("positive")
+        document.getElementById("message").classList.add("negative")
+        let errors = response["responseJSON"]["error"]
+        values = Object.values(errors)
+        document.getElementById("message_content").innerHTML = ""
+        for (let i of values){
+          document.getElementById("message_content").innerHTML += `<li>${i[0]}</li>`
+        }
+        $("#message").delay(500).fadeIn()
+        $("#message").delay(2000).fadeOut();
+      } 
+  })
+})
+$("#login").submit(function (e) {
+  // preventing from page reload and default actions
+  e.preventDefault();
+  // serialize the data for sending the form data.
+  var serializedData = $(this).serialize();
+  // make POST ajax call
+  $.ajax({
+      type: 'POST',
+      url: "{% url 'login' %}",
+      data: serializedData,
+      success: function (response) {
+          window.location.href = `{% url 'home' %}`
+          
+      },
+      error: function (response) {
+        console.log(response)
+        document.getElementById("login-header").innerHTML = "Error"
+        document.getElementById("login-message").classList.remove("positive")
+        document.getElementById("login-message").classList.add("negative")
+        document.getElementById("login_message_content").innerHTML = `<li>${response["responseJSON"]["error"]}</li>`
+        $("#login-message").delay(500).fadeIn()
+        $("#login-message").delay(2000).fadeOut();
+      } 
+  })
+})
+$("#create").submit(function (e) {
+  // preventing from page reload and default actions
+  e.preventDefault();
+  // serialize the data for sending the form data.
+  var serializedData = new FormData(this);
+  // make POST ajax call
+  $.ajax({
+      type: 'POST',
+      processData: false,
+      contentType: false,
+      cache: false,
+      enctype: 'multipart/form-data',
+      url: "{% url 'create' %}",
+      data: serializedData,
+      success: function (response) {
+          // on successfull creating object
+          document.getElementById("create-header").innerHTML = "SUCCESS!"
+          document.getElementById("create-message").classList.remove("negative")
+          document.getElementById("create-message").classList.add("success")
+          document.getElementById("create_message_content").innerHTML = "<li>Media Successfully Created</li>"
+          $("#create-message").delay(500).fadeIn()
+          // 1. clear the form.
+          $("#create").trigger('reset');
+          setTimeout(()=>{
+            window.location.href = `{% url 'vids' %}`
+          }, 500)
+          
+
+      },
+      error: function (response) {
+        console.log(response)
+        document.getElementById("create-header").innerHTML = "Error"
+        document.getElementById("create-message").classList.remove("positive")
+        document.getElementById("create-message").classList.add("negative")
+        document.getElementById("create_message_content").innerHTML = `<li>${response["responseJSON"]["error"]}</li>`
+        $("#create-message").delay(500).fadeIn()
+        $("#create-message").delay(2000).fadeOut();
+      } 
+  })
+})
+let targetInput = document.getElementById('file-upload');
+
+function getVideoCover(file, seekTo = 0.0) {
+  return new Promise((resolve, reject) => {
+      // load the file to a video player
+      const videoPlayer = document.createElement('video');
+      videoPlayer.setAttribute('src', URL.createObjectURL(file));
+      videoPlayer.load();
+      videoPlayer.addEventListener('error', (ex) => {
+          reject(null);
+      });
+      // load metadata of the video to get video duration and dimensions
+      videoPlayer.addEventListener('loadedmetadata', () => {
+          // seek to user defined timestamp (in seconds) if possible
+          if (videoPlayer.duration < seekTo) {
+              reject("video is too short.");
+              return;
+          }
+          // delay seeking or else 'seeked' event won't fire on Safari
+          setTimeout(() => {
+            videoPlayer.currentTime = seekTo;
+          }, 200);
+          // extract video thumbnail once seeking is complete
+          videoPlayer.addEventListener('seeked', () => {
+              // define a canvas to have the same dimension as the video
+              const canvas = document.createElement("canvas");
+              canvas.width = videoPlayer.videoWidth;
+              canvas.height = videoPlayer.videoHeight;
+              // draw the video frame to canvas
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+              // return the canvas image as a blob
+              ctx.canvas.toBlob(
+                  blob => {
+                      resolve(blob);
+                  },
+                  "image/jpeg",
+                  0.75 /* quality */
+              );
+          });
+      });
+  });
+}
+targetInput.addEventListener('change', async function(e){
+  try {
+    let fileInputElement = document.getElementById("thumbnail-upload")
+    const data = await getVideoCover(this.files[0], 1);
+    console.log(data)
+    let file = new File([data], "img.jpg",{type:"image/jpeg", lastModified:new Date().getTime()});
+    let container = new DataTransfer();
+    container.items.add(file);
+    fileInputElement.files = container.files;
+  } catch (ex) {
+    console.log("ERROR: ", ex);
+  }
+})
+
+{% endblock js %}

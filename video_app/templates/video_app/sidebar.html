@@ -1,0 +1,12 @@
+{% load static %}
+<div class="shortcut-links" >
+  <a href="{% url 'home' %}" {% if request.path == "/" %}style="color: #ed3833;"{% else %}style="color: #5a5a5a;"{% endif %}><img src="{% static 'assets/img/home.png' %}" alt=""><p>Home</p></a>
+  {% if request.user.is_authenticated %}
+  <a style="color: #5a5a5a;" href="" onclick="ToggleModalCreateVideo(event)"><img src="{% static 'assets/img/upload.png' %}" alt="" ><p>Create</p></a>
+  <a href="{% url 'vids' %}" {% if request.path == "/vids/" %}style="color: #ed3833;"{% else %}style="color: #5a5a5a;"{% endif %}><img src="{% static 'assets/img/library.png' %}" alt=""><p>Your Videos</p></a>
+  <a style="color: #5a5a5a;" href="{% url 'logout' %}"><img src="{% static 'assets/img/lgout.png' %}" alt=""><p>Logout</p></a>
+  {% else %}
+  <a style="color: #5a5a5a;" href="" onclick="ToggleModalLogin(event)"><img src="{% static 'assets/img/lgout.png' %}" alt=""><p>Login</p></a>
+  <a style="color: #5a5a5a;" href="" onclick="ToggleModalSignUp(event)"><img src="{% static 'assets/img/signup.png' %}" alt=""><p>Sign Up</p></a>
+  {% endif %}
+</div>

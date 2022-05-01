@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <head>
+
+        <link rel="icon" href="{% static 'assets/img/youtube.svg' %}" />
+        
+        <meta charset="UTF-8">
+       
+        <!-- ===== CSS ===== -->
+        <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+
+        <title>Multimedia App</title>
+    </head>
+    <body>
+        <nav class="flex-div">
+            <div class="nav-left flex-div">
+                <img src="{% static 'assets/img/menu.png' %}" alt="" class="menu-icon">
+                <a href="{% url 'home' %}"><img src="{% static 'assets/img/logo.png' %}" alt="" class="logo"></a>
+            </div>
+            <div class="nav-middle flex-div">
+              <form id="search">
+                <div class="search-box flex-div">
+                    <input type="text" id="search_input" placeholder="Search">
+                    <img onclick="Submit()" src="{% static 'assets/img/search.png' %}" alt="">
+                </div>
+              </form>
+            </div>
+            <div class="nav-right flex-div">
+              {% if request.user.is_authenticated %}
+              <span>Welcome</span> <strong style="margin-left: 5px;">{{request.user.username|capfirst}}!</strong>
+              {% else %}
+              {% endif %}
+            </div>
+
+        </nav>
+
+        <!-- sidebar -->
+
+
+        <div class="sidebar">
+          {% include 'video_app/sidebar.html' %}
+        </div>
+        <!-- main -->
+        <div class="container">
+          {% block messages %}{% endblock messages %}
+          
+            <div class="list-container">
+              {% block video_block %}
+              {% endblock video_block %}
+            </div>
+
+              
+        </div>
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>    
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <script>
+      function ToggleModalCreateVideo(e){
+        e = e || window.event
+        e.preventDefault()
+        $('.ui.modal.create-video')
+        .modal({
+          closable  : false,
+          onApprove : function() {
+            return false;
+          }
+        })
+        .modal('show');
+      }
+      function ToggleModalLogin(e){
+        e = e || window.event
+        e.preventDefault()
+        $('.ui.modal.login').modal('show');
+      }
+      function ToggleModalSignUp(e){
+        e = e || window.event
+        e.preventDefault()
+        $('.ui.modal.signup').modal('show');
+      }
+      $('#file-upload').change(function() {
+        var file = $('#file-upload')[0].files[0];
+        const validImageTypes = ['image/gif', 'image/jpeg', 'image/png', 'image/jpg',];
+        if (validImageTypes.includes(file["type"])) {
+            document.getElementById("file-type").innerHTML = `
+            <a class="ui yellow label">
+              <i class="file image outline icon"></i>
+              ${file.name}
+            </a>
+            `
+        }
+        else{
+          document.getElementById("file-type").innerHTML = `
+            <a class="ui blue label">
+              <i class="file video outline icon"></i>
+              ${file.name}
+            </a>
+            `
+        }
+      });
+      function Submit(){
+        $("#search").submit()
+      }
+      $("#search").submit(function (e) {
+        // preventing from page reload and default actions
+        e.preventDefault();
+        window.location.href = `{{request.path}}?s=${$('#search_input').val()}`  
+      }
+      )
+      {% block js %}{% endblock js %}
+    </script>
+
+    </body>
+</html>
